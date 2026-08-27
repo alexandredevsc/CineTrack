@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title th:text="${tituloPagina + ' | CineTrack'}">
+        Filme | CineTrack
+    </title>
+
+    <link
+        rel="stylesheet"
+        th:href="@{/css/style.css}"
+    >
+</head>
+
+<body>
+
+    <!-- Cabeçalho da aplicação. -->
+    <header class="app-header">
+        <div class="container header-content">
+
+            <a
+                class="brand"
+                th:href="@{/filmes}"
+                aria-label="Ir para a página de filmes"
+            >
+                CineTrack
+            </a>
+
+            <nav
+                class="main-navigation"
+                aria-label="Navegação principal"
+            >
+                <a
+                    class="active"
+                    th:href="@{/filmes}"
+                    aria-current="page"
+                >
+                    Filmes
+                </a>
+
+                <a th:href="@{/generos}">
+                    Gêneros
+                </a>
+            </nav>
+
+        </div>
+    </header>
+
+    <main class="container page-content">
+
+        <!-- Título da página. -->
+        <section class="page-heading">
+            <div>
+                <p class="eyebrow">
+                    Minha coleção
+                </p>
+
+                <h1 th:text="${tituloPagina}">
+                    Novo filme
+                </h1>
+
+                <p class="page-description">
+                    Registre o filme e acompanhe seu status.
+                </p>
+            </div>
+        </section>
+
+        <!--
+            Formulário conectado ao objeto Filme recebido
+            do Controller.
+        -->
+        <section class="form-card form-card-large">
+
+            <form
+                method="post"
+                th:object="${filme}"
+                th:action="${filme.id == null}
+                    ? @{/filmes}
+                    : @{/filmes/{id}(id=${filme.id})}"
+            >
+
+                <!-- Erros gerais das regras de negócio. -->
+                <div
+                    class="alert alert-error"
+                    role="alert"
+                    th:if="${#fields.hasGlobalErrors()}"
+                >
+                    <p
+                        th:each="erro : ${#fields.globalErrors()}"
+                        th:text="${erro}"
+                    >
+                        Não foi possível salvar o filme.
+                    </p>
+                </div>
+
+                <!--
+                    O grid agrupará campos relacionados
+                    quando houver espaço na tela.
+                -->
+                <div class="form-grid">
+
+                    <!-- Título. -->
+                    <div class="form-group form-group-full">
+
+                        <label for="titulo">
+                            Título
+                        </label>
+
+                        <input
+                            id="titulo"
+                            type="text"
+                            th:field="*{titulo}"
+                            th:classappend="${
+                                #fields.hasErrors('titulo')
+                            } ? 'input-error' : ''"
+                            maxlength="120"
+                            placeholder="Ex.: Interestelar"
+                            autocomplete="off"
+                            required
+                            autofocus
+                            aria-describedby="titulo-erro"
+                        >
+
+                        <span
+                            id="titulo-erro"
+                            class="field-error"
+                            th:if="${#fields.hasErrors('titulo')}"
+                            th:errors="*{titulo}"
+                        >
+                            Informe o título.
+                        </span>
+
+                    </div>
+
+                    <!-- Ano. -->
+                    <div class="form-group">
+
+                        <label for="ano">
+                            Ano
+                        </label>
+
+                        <input
+                            id="ano"
+                            type="number"
+                            th:field="*{ano}"
+                            th:classappend="${
+                                #fields.hasErrors('ano')
+                            } ? 'input-error' : ''"
+                            min="1888"
+                            max="2100"
+                            placeholder="Ex.: 2014"
+                            required
+                            aria-describedby="ano-erro"
+                        >
+
+                        <span
+                            id="ano-erro"
+                            class="field-error"
+                            th:if="${#fields.hasErrors('ano')}"
+                            th:errors="*{ano}"
+                        >
+                            Informe um ano válido.
+                        </span>
+
+                    </div>
+
+                    <!-- Gênero. -->
+                    <div class="form-group">
+
+                        <label for="genero">
+                            Gênero
+                        </label>
+
+                        <select
+                            id="genero"
+                            th:field="*{genero.id}"
+                            th:classappend="${
+                                #fields.hasErrors('genero')
+                            } ? 'input-error' : ''"
+                            required
+                            aria-describedby="genero-erro"
+                        >
+                            <option value="">
+                                Selecione um gênero
+                            </option>
+
+                            <option
+                                th:each="genero : ${generos}"
+                                th:value="${genero.id}"
+                                th:text="${genero.nome}"
+                            >
+                                Ficção científica
+                            </option>
+                        </select>
+
+                        <span
+                            id="genero-erro"
+                            class="field-error"
+                            th:if="${#fields.hasErrors('genero')}"
+                            th:errors="*{genero}"
+                        >
+                            Selecione o gênero.
+                        </span>
+
+                        <!--
+                            Ajuda o usuário quando ainda não
+                            existem gêneros cadastrados.
+                        -->
+                        <small
+                            class="field-help"
+                            th:if="${#lists.isEmpty(generos)}"
+                        >
+                            Nenhum gênero disponível.
+
+                            <a th:href="@{/generos/novo}">
+                                Cadastre um gênero primeiro.
+                            </a>
+                        </small>
+
+                    </div>
+
+                    <!-- Status. -->
+                    <div class="form-group">
+
+                        <label for="status">
+                            Status
+                        </label>
+
+                        <select
+                            id="status"
+                            th:field="*{status}"
+                            th:classappend="${
+                                #fields.hasErrors('status')
+                            } ? 'input-error' : ''"
+                            required
+                            aria-describedby="status-erro"
+                        >
+                            <option
+                                th:each="status : ${statusDisponiveis}"
+                                th:value="${status}"
+                                th:text="${status.descricao}"
+                            >
+                                Quero assistir
+                            </option>
+                        </select>
+
+                        <span
+                            id="status-erro"
+                            class="field-error"
+                            th:if="${#fields.hasErrors('status')}"
+                            th:errors="*{status}"
+                        >
+                            Selecione o status.
+                        </span>
+
+                    </div>
+
+                    <!-- Nota. -->
+                    <div class="form-group">
+
+                        <label for="nota">
+                            Nota
+                        </label>
+
+                        <input
+                            id="nota"
+                            type="number"
+                            th:field="*{nota}"
+                            th:classappend="${
+                                #fields.hasErrors('nota')
+                            } ? 'input-error' : ''"
+                            min="0"
+                            max="10"
+                            step="0.5"
+                            placeholder="De 0 a 10"
+                            aria-describedby="nota-ajuda nota-erro"
+                        >
+
+                        <small
+                            id="nota-ajuda"
+                            class="field-help"
+                        >
+                            Obrigatória somente para filmes assistidos.
+                        </small>
+
+                        <span
+                            id="nota-erro"
+                            class="field-error"
+                            th:if="${#fields.hasErrors('nota')}"
+                            th:errors="*{nota}"
+                        >
+                            Informe uma nota entre 0 e 10.
+                        </span>
+
+                    </div>
+
+                    <!-- Comentário. -->
+                    <div class="form-group form-group-full">
+
+                        <label for="comentario">
+                            Comentário
+                            <span class="optional-label">
+                                opcional
+                            </span>
+                        </label>
+
+                        <textarea
+                            id="comentario"
+                            th:field="*{comentario}"
+                            th:classappend="${
+                                #fields.hasErrors('comentario')
+                            } ? 'input-error' : ''"
+                            rows="5"
+                            maxlength="1000"
+                            placeholder="Escreva uma observação sobre o filme..."
+                            aria-describedby="comentario-ajuda comentario-erro"
+                        ></textarea>
+
+                        <div class="field-footer">
+
+                            <small
+                                id="comentario-ajuda"
+                                class="field-help"
+                            >
+                                Máximo de 1000 caracteres.
+                            </small>
+
+                            <span
+                                id="comentario-erro"
+                                class="field-error"
+                                th:if="${
+                                    #fields.hasErrors('comentario')
+                                }"
+                                th:errors="*{comentario}"
+                            >
+                                O comentário é muito longo.
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!--
+                    Esta informação prepara o usuário para
+                    a integração automática de capas.
+                -->
+                <aside class="form-information">
+                    <strong>Capa do filme</strong>
+
+                    <p>
+                        A capa será pesquisada automaticamente
+                        após o cadastro quando a integração
+                        estiver habilitada.
+                    </p>
+                </aside>
+
+                <!-- Botões do formulário. -->
+                <div class="form-actions">
+
+                    <a
+                        class="button button-secondary"
+                        th:href="@{/filmes}"
+                    >
+                        Cancelar
+                    </a>
+
+                    <button
+                        class="button button-primary"
+                        type="submit"
+                        th:disabled="${#lists.isEmpty(generos)}"
+                    >
+                        Salvar filme
+                    </button>
+
+                </div>
+
+            </form>
+        </section>
+
+    </main>
+
+    <footer class="app-footer">
+        <div class="container">
+            <p>
+                CineTrack — sua coleção de filmes organizada.
+            </p>
+        </div>
+    </footer>
+
+</body>
+</html>

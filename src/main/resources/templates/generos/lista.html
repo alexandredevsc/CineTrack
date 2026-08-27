@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+
+<!--
+    xmlns:th habilita os atributos do Thymeleaf,
+    como th:text, th:if, th:each e th:href.
+-->
+<html lang="pt-BR"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+
+    <!-- Permite que a página se adapte a celulares. -->
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Gêneros | CineTrack</title>
+
+    <!--
+        O CSS será criado numa etapa posterior.
+        th:href gera corretamente o endereço /css/style.css.
+    -->
+    <link
+        rel="stylesheet"
+        th:href="@{/css/style.css}"
+    >
+</head>
+
+<body>
+
+    <!-- Cabeçalho principal da aplicação. -->
+    <header class="app-header">
+        <div class="container header-content">
+
+            <a
+                class="brand"
+                th:href="@{/filmes}"
+                aria-label="Ir para a página de filmes"
+            >
+                CineTrack
+            </a>
+
+            <!-- Navegação principal. -->
+            <nav
+                class="main-navigation"
+                aria-label="Navegação principal"
+            >
+                <a th:href="@{/filmes}">
+                    Filmes
+                </a>
+
+                <a
+                    class="active"
+                    th:href="@{/generos}"
+                    aria-current="page"
+                >
+                    Gêneros
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Conteúdo principal da página. -->
+    <main class="container page-content">
+
+        <!-- Título e ação principal. -->
+        <section class="page-heading">
+            <div>
+                <p class="eyebrow">
+                    Organização
+                </p>
+
+                <h1>Gêneros</h1>
+
+                <p class="page-description">
+                    Organize seus filmes por categorias.
+                </p>
+            </div>
+
+            <a
+                class="button button-primary"
+                th:href="@{/generos/novo}"
+            >
+                Novo gênero
+            </a>
+        </section>
+
+        <!--
+            Mensagem exibida depois de cadastrar,
+            editar ou excluir com sucesso.
+        -->
+        <div
+            class="alert alert-success"
+            role="status"
+            th:if="${mensagemSucesso}"
+            th:text="${mensagemSucesso}"
+        >
+            Operação realizada com sucesso.
+        </div>
+
+        <!-- Mensagem de erro enviada pelo Controller. -->
+        <div
+            class="alert alert-error"
+            role="alert"
+            th:if="${mensagemErro}"
+            th:text="${mensagemErro}"
+        >
+            Não foi possível realizar a operação.
+        </div>
+
+        <!--
+            Estado vazio: aparece quando não existe
+            nenhum gênero cadastrado.
+        -->
+        <section
+            class="empty-state"
+            th:if="${#lists.isEmpty(generos)}"
+        >
+            <h2>Nenhum gênero cadastrado</h2>
+
+            <p>
+                Cadastre o primeiro gênero para começar
+                a organizar seus filmes.
+            </p>
+
+            <a
+                class="button button-primary"
+                th:href="@{/generos/novo}"
+            >
+                Cadastrar primeiro gênero
+            </a>
+        </section>
+
+        <!--
+            A tabela só aparece quando a lista possui registros.
+        -->
+        <section
+            class="content-card"
+            th:unless="${#lists.isEmpty(generos)}"
+        >
+            <div class="table-responsive">
+
+                <table class="data-table">
+
+                    <thead>
+                        <tr>
+                            <th scope="col">
+                                Nome
+                            </th>
+
+                            <th
+                                scope="col"
+                                class="actions-column"
+                            >
+                                Ações
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        <!--
+                            th:each repete a linha para cada
+                            gênero recebido do Controller.
+                        -->
+                        <tr th:each="genero : ${generos}">
+
+                            <td
+                                class="genre-name"
+                                th:text="${genero.nome}"
+                            >
+                                Ficção científica
+                            </td>
+
+                            <td class="table-actions">
+
+                                <!--
+                                    Monta uma URL como:
+                                    /generos/1/editar
+                                -->
+                                <a
+                                    class="button button-secondary button-small"
+                                    th:href="@{/generos/{id}/editar(
+                                        id=${genero.id}
+                                    )}"
+                                >
+                                    Editar
+                                </a>
+
+                                <!--
+                                    Exclusão usa formulário POST.
+                                    Não usamos link GET para apagar dados.
+                                -->
+                                <form
+                                    class="inline-form"
+                                    method="post"
+                                    th:action="@{/generos/{id}/excluir(
+                                        id=${genero.id}
+                                    )}"
+                                >
+                                    <button
+                                        class="button button-danger button-small"
+                                        type="submit"
+                                    >
+                                        Excluir
+                                    </button>
+                                </form>
+
+                            </td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Rodapé simples e sem informações desnecessárias. -->
+    <footer class="app-footer">
+        <div class="container">
+            <p>
+                CineTrack — sua coleção de filmes organizada.
+            </p>
+        </div>
+    </footer>
+
+</body>
+</html>
