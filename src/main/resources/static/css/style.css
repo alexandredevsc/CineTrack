@@ -505,3 +505,12 @@ textarea:focus {
 @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; }
 }
+
+/* Contador de caracteres criado pelo JavaScript. */
+.character-counter {
+    margin-top: 6px;
+    display: block;
+    color: var(--muted);
+    font-size: 0.78rem;
+    text-align: right;
+}
