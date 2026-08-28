@@ -41,13 +41,27 @@ public class Filme {
     private Long id;
 
     /*
+     * Identificador do filme na API do TMDB.
+     *
+     * Pode ser nulo porque a busca da capa é opcional.
+     */
+    @Column(name = "tmdb_id")
+    private Long tmdbId;
+
+    /*
+     * Endereço da capa em tamanho apropriado para os cards.
+     *
+     * Salvamos somente a URL, não o arquivo da imagem.
+     * O tamanho 500 permite armazenar endereços mais longos.
+     */
+    @Column(name = "capa_url", length = 500)
+    private String capaUrl;
+
+    /*
      * O título é obrigatório e pode ter no máximo 120 caracteres.
      */
     @NotBlank(message = "Informe o título do filme.")
-    @Size(
-        max = 120,
-        message = "O título deve ter no máximo 120 caracteres."
-    )
+    @Size(max = 120, message = "O título deve ter no máximo 120 caracteres.")
     @Column(nullable = false, length = 120)
     private String titulo;
 
@@ -67,14 +81,8 @@ public class Filme {
      *
      * BigDecimal é usado para manter precisão decimal.
      */
-    @DecimalMin(
-        value = "0.0",
-        message = "A nota mínima é 0."
-    )
-    @DecimalMax(
-        value = "10.0",
-        message = "A nota máxima é 10."
-    )
+    @DecimalMin(value = "0.0", message = "A nota mínima é 0.")
+    @DecimalMax(value = "10.0", message = "A nota máxima é 10.")
     @NumberFormat(pattern = "#0.0")
     @Column(precision = 3, scale = 1)
     private BigDecimal nota;
@@ -82,10 +90,7 @@ public class Filme {
     /*
      * Comentário opcional com até 1000 caracteres.
      */
-    @Size(
-        max = 1000,
-        message = "O comentário deve ter no máximo 1000 caracteres."
-    )
+    @Size(max = 1000, message = "O comentário deve ter no máximo 1000 caracteres.")
     @Column(length = 1000)
     private String comentario;
 
@@ -122,13 +127,12 @@ public class Filme {
      * Não recebemos o ID porque ele será gerado pelo MySQL.
      */
     public Filme(
-        String titulo,
-        Integer ano,
-        BigDecimal nota,
-        String comentario,
-        StatusFilme status,
-        Genero genero
-    ) {
+            String titulo,
+            Integer ano,
+            BigDecimal nota,
+            String comentario,
+            StatusFilme status,
+            Genero genero) {
         this.titulo = titulo;
         this.ano = ano;
         this.nota = nota;
@@ -192,4 +196,33 @@ public class Filme {
     public void setGenero(Genero genero) {
         this.genero = genero;
     }
+
+    /*
+     * Devolve o identificador do filme no TMDB.
+     */
+    public Long getTmdbId() {
+        return tmdbId;
+    }
+
+    /*
+     * Define o identificador do filme no TMDB.
+     */
+    public void setTmdbId(Long tmdbId) {
+        this.tmdbId = tmdbId;
+    }
+
+    /*
+     * Devolve o endereço da capa.
+     */
+    public String getCapaUrl() {
+        return capaUrl;
+    }
+
+    /*
+     * Define o endereço da capa.
+     */
+    public void setCapaUrl(String capaUrl) {
+        this.capaUrl = capaUrl;
+    }
+
 }

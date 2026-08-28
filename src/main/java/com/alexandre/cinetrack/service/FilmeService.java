@@ -11,6 +11,7 @@ import com.alexandre.cinetrack.entity.Genero;
 import com.alexandre.cinetrack.entity.StatusFilme;
 import com.alexandre.cinetrack.repository.FilmeRepository;
 import com.alexandre.cinetrack.repository.GeneroRepository;
+import com.alexandre.cinetrack.integration.tmdb.CapaFilmeService;
 
 /*
  * Service responsável pelas regras de negócio dos filmes.
@@ -21,6 +22,7 @@ public class FilmeService {
 
     private final FilmeRepository filmeRepository;
     private final GeneroRepository generoRepository;
+    private final CapaFilmeService capaFilmeService;
 
     /*
      * Injeção de dependência pelo construtor.
@@ -29,11 +31,12 @@ public class FilmeService {
      * dependências sejam alteradas depois da criação do Service.
      */
     public FilmeService(
-        FilmeRepository filmeRepository,
-        GeneroRepository generoRepository
-    ) {
+            FilmeRepository filmeRepository,
+            GeneroRepository generoRepository,
+            CapaFilmeService capaFilmeService) {
         this.filmeRepository = filmeRepository;
         this.generoRepository = generoRepository;
+        this.capaFilmeService = capaFilmeService;
     }
 
     /*
@@ -48,11 +51,9 @@ public class FilmeService {
      */
     public Filme buscarPorId(Long id) {
         return filmeRepository.findById(id)
-            .orElseThrow(
-                () -> new IllegalArgumentException(
-                    "Filme não encontrado."
-                )
-            );
+                .orElseThrow(
+                        () -> new IllegalArgumentException(
+                                "Filme não encontrado."));
     }
 
     /*
@@ -66,7 +67,7 @@ public class FilmeService {
         buscarGeneroPorId(generoId);
 
         return filmeRepository
-            .findByGeneroIdOrderByTituloAsc(generoId);
+                .findByGeneroIdOrderByTituloAsc(generoId);
     }
 
     /*
@@ -75,12 +76,11 @@ public class FilmeService {
     public List<Filme> listarPorStatus(StatusFilme status) {
         if (status == null) {
             throw new IllegalArgumentException(
-                "Informe um status válido."
-            );
+                    "Informe um status válido.");
         }
 
         return filmeRepository
-            .findByStatusOrderByTituloAsc(status);
+                .findByStatusOrderByTituloAsc(status);
     }
 
     /*
@@ -93,9 +93,8 @@ public class FilmeService {
         validarNotaMinima(notaMinima);
 
         return filmeRepository
-            .findByNotaGreaterThanEqualOrderByNotaDesc(
-                notaMinima
-            );
+                .findByNotaGreaterThanEqualOrderByNotaDesc(
+                        notaMinima);
     }
 
     /*
@@ -109,15 +108,19 @@ public class FilmeService {
          */
         if (filme == null) {
             throw new IllegalArgumentException(
-                "Os dados do filme são obrigatórios."
-            );
+                    "Os dados do filme são obrigatórios.");
         }
 
         /*
-         * Em uma edição, confirma que o filme existe.
+         * Em uma edição, recupera o filme existente.
+         *
+         * Precisamos dele para preservar os dados do TMDB que não
+         * aparecem como campos editáveis no formulário.
          */
+        Filme filmeExistente = null;
+
         if (filme.getId() != null) {
-            buscarPorId(filme.getId());
+            filmeExistente = buscarPorId(filme.getId());
         }
 
         /*
@@ -134,21 +137,33 @@ public class FilmeService {
          * Confirma que o gênero selecionado existe no banco.
          */
         if (filme.getGenero() == null
-            || filme.getGenero().getId() == null) {
+                || filme.getGenero().getId() == null) {
 
             throw new IllegalArgumentException(
-                "Selecione um gênero válido."
-            );
+                    "Selecione um gênero válido.");
         }
 
-        Genero generoEncontrado =
-            buscarGeneroPorId(filme.getGenero().getId());
+        Genero generoEncontrado = buscarGeneroPorId(filme.getGenero().getId());
 
         /*
          * Substitui o objeto recebido pela Entity recuperada
          * do banco, garantindo um relacionamento válido.
          */
         filme.setGenero(generoEncontrado);
+
+        /*
+         * Em um cadastro novo, pesquisa a capa automaticamente.
+         */
+        if (filmeExistente == null) {
+            capaFilmeService.preencherCapa(filme);
+        } else {
+            /*
+             * Durante uma edição, mantém os dados encontrados
+             * anteriormente para evitar perder a capa.
+             */
+            filme.setTmdbId(filmeExistente.getTmdbId());
+            filme.setCapaUrl(filmeExistente.getCapaUrl());
+        }
 
         return filmeRepository.save(filme);
     }
@@ -167,11 +182,9 @@ public class FilmeService {
      */
     private Genero buscarGeneroPorId(Long id) {
         return generoRepository.findById(id)
-            .orElseThrow(
-                () -> new IllegalArgumentException(
-                    "Gênero não encontrado."
-                )
-            );
+                .orElseThrow(
+                        () -> new IllegalArgumentException(
+                                "Gênero não encontrado."));
     }
 
     /*
@@ -183,17 +196,15 @@ public class FilmeService {
         }
 
         if (filme.getComentario() != null) {
-            String comentarioNormalizado =
-                filme.getComentario().trim();
+            String comentarioNormalizado = filme.getComentario().trim();
 
             /*
              * Salva null em vez de uma String vazia.
              */
             filme.setComentario(
-                comentarioNormalizado.isEmpty()
-                    ? null
-                    : comentarioNormalizado
-            );
+                    comentarioNormalizado.isEmpty()
+                            ? null
+                            : comentarioNormalizado);
         }
     }
 
@@ -206,17 +217,13 @@ public class FilmeService {
     private void validarStatusENota(Filme filme) {
         if (filme.getStatus() == null) {
             throw new IllegalArgumentException(
-                "Selecione o status do filme."
-            );
+                    "Selecione o status do filme.");
         }
 
-        if (
-            filme.getStatus() == StatusFilme.ASSISTIDO
-            && filme.getNota() == null
-        ) {
+        if (filme.getStatus() == StatusFilme.ASSISTIDO
+                && filme.getNota() == null) {
             throw new IllegalStateException(
-                "Informe uma nota para o filme assistido."
-            );
+                    "Informe uma nota para o filme assistido.");
         }
 
         if (filme.getStatus() == StatusFilme.QUERO_ASSISTIR) {
@@ -230,23 +237,19 @@ public class FilmeService {
     private void validarNotaMinima(BigDecimal notaMinima) {
         if (notaMinima == null) {
             throw new IllegalArgumentException(
-                "Informe a nota mínima."
-            );
+                    "Informe a nota mínima.");
         }
 
         BigDecimal zero = BigDecimal.ZERO;
         BigDecimal dez = BigDecimal.TEN;
 
-        boolean menorQueZero =
-            notaMinima.compareTo(zero) < 0;
+        boolean menorQueZero = notaMinima.compareTo(zero) < 0;
 
-        boolean maiorQueDez =
-            notaMinima.compareTo(dez) > 0;
+        boolean maiorQueDez = notaMinima.compareTo(dez) > 0;
 
         if (menorQueZero || maiorQueDez) {
             throw new IllegalArgumentException(
-                "A nota mínima deve estar entre 0 e 10."
-            );
+                    "A nota mínima deve estar entre 0 e 10.");
         }
     }
 }

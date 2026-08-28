@@ -214,23 +214,42 @@
       >
         <article class="movie-card" th:each="filme : ${filmes}">
           <!--
-                    Placeholder temporário da capa.
+                    P<!-- Capa encontrada automaticamente no TMDB. -->
+          <div
+            class="movie-poster"
+            th:if="${filme.capaUrl != null
+          and !#strings.isEmpty(filme.capaUrl)}"
+          >
+            <img
+              th:src="${filme.capaUrl}"
+              th:alt="${'Capa do filme ' + filme.titulo}"
+              width="342"
+              height="513"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
 
-                    Quando a integração com o TMDB for criada,
-                    este bloco poderá conter uma imagem real.
-                -->
-          <div class="movie-poster movie-poster-placeholder" aria-hidden="true">
+          <!--
+  Fallback exibido quando o TMDB não encontra uma capa
+  ou para filmes cadastrados antes da integração.
+-->
+          <div
+            class="movie-poster movie-poster-placeholder"
+            aria-hidden="true"
+            th:unless="${filme.capaUrl != null
+              and !#strings.isEmpty(filme.capaUrl)}"
+          >
             <span
               th:text="${#strings.substring(
-                            filme.titulo,
-                            0,
-                            1
-                        )}"
+                  filme.titulo,
+                  0,
+                  1
+              )}"
             >
               F
             </span>
           </div>
-
           <div class="movie-card-content">
             <!-- Status destacado no início do card. -->
             <span
@@ -316,6 +335,13 @@
     <footer class="app-footer">
       <div class="container">
         <p>CineTrack — sua coleção de filmes organizada.</p>
+
+        <!-- Atribuição exigida para o uso dos dados e imagens do TMDB. -->
+        <p>
+          Este produto usa a API do TMDB, mas não é endossado nem certificado
+          pelo TMDB. Desenvolvido pelo Dev fullstack
+          <strong>Alexandre Milton Alves</strong>
+        </p>
       </div>
     </footer>
   </body>
