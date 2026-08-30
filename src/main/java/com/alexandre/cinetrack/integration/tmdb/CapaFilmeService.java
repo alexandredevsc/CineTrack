@@ -19,8 +19,7 @@ public class CapaFilmeService {
      * Logger registra problemas técnicos no terminal sem interromper
      * o funcionamento normal da aplicação.
      */
-    private static final Logger LOGGER =
-        LoggerFactory.getLogger(CapaFilmeService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CapaFilmeService.class);
 
     private final TmdbClient tmdbClient;
 
@@ -33,36 +32,60 @@ public class CapaFilmeService {
     }
 
     /*
-     * Pesquisa e preenche a capa apenas em filmes novos.
+     * Pesquisa e preenche a capa quando o filme ainda não possui uma.
+     *
+     * O retorno informa se uma capa foi encontrada:
+     * true = os dados do TMDB foram preenchidos;
+     * false = nenhuma alteração foi realizada.
      */
-    public void preencherCapa(Filme filme) {
+    public boolean preencherCapa(Filme filme) {
         /*
-         * Um ID existente indica que o filme já foi salvo.
-         * Assim, evitamos pesquisar novamente durante uma edição.
+         * Evita uma nova chamada ao TMDB quando o filme
+         * já possui uma capa válida.
          */
-        if (filme.getId() != null) {
-            return;
+        if (filme.getCapaUrl() != null
+                && !filme.getCapaUrl().isBlank()) {
+            return false;
         }
 
         try {
-            tmdbClient
-                .buscarFilme(filme.getTitulo(), filme.getAno())
-                .ifPresent(resultado -> {
-                    filme.setTmdbId(resultado.id());
-                    filme.setCapaUrl(
-                        tmdbClient.montarUrlCapa(resultado.posterPath())
-                    );
-                });
+            /*
+             * Pesquisa o filme usando o título e o ano cadastrados.
+             */
+            var resultadoEncontrado = tmdbClient.buscarFilme(
+                    filme.getTitulo(),
+                    filme.getAno());
+
+            /*
+             * Se a pesquisa não encontrou um resultado com capa,
+             * não há dados para atualizar.
+             */
+            if (resultadoEncontrado.isEmpty()) {
+                return false;
+            }
+
+            var resultado = resultadoEncontrado.get();
+
+            /*
+             * Guarda o identificador do TMDB e a URL completa da capa
+             * dentro da Entity Filme.
+             */
+            filme.setTmdbId(resultado.id());
+            filme.setCapaUrl(
+                    tmdbClient.montarUrlCapa(resultado.posterPath()));
+
+            return true;
         } catch (RestClientException exception) {
             /*
-             * Uma falha externa não deve impedir o cadastro.
-             * Registramos somente uma mensagem técnica no terminal.
+             * Problemas de internet, autenticação ou indisponibilidade
+             * do TMDB não interrompem o cadastro do filme.
              */
             LOGGER.warn(
-                "Não foi possível buscar a capa de '{}': {}",
-                filme.getTitulo(),
-                exception.getMessage()
-            );
+                    "Não foi possível buscar a capa de '{}': {}",
+                    filme.getTitulo(),
+                    exception.getMessage());
+
+            return false;
         }
     }
 }

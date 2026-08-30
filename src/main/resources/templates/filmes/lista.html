@@ -213,15 +213,16 @@
         th:unless="${#lists.isEmpty(filmes)}"
       >
         <article class="movie-card" th:each="filme : ${filmes}">
-          <!--
-                    P<!-- Capa encontrada automaticamente no TMDB. -->
+          <!-- Capa encontrada automaticamente no TMDB. -->
           <div
             class="movie-poster"
             th:if="${filme.capaUrl != null
           and !#strings.isEmpty(filme.capaUrl)}"
           >
             <img
+              src=""
               th:src="${filme.capaUrl}"
+              alt="Capa do filme"
               th:alt="${'Capa do filme ' + filme.titulo}"
               width="342"
               height="513"

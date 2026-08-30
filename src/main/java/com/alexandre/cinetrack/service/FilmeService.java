@@ -2,6 +2,7 @@ package com.alexandre.cinetrack.service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -158,11 +159,33 @@ public class FilmeService {
             capaFilmeService.preencherCapa(filme);
         } else {
             /*
-             * Durante uma edição, mantém os dados encontrados
-             * anteriormente para evitar perder a capa.
+             * Verifica se o título ou o ano usado na pesquisa mudou.
              */
-            filme.setTmdbId(filmeExistente.getTmdbId());
-            filme.setCapaUrl(filmeExistente.getCapaUrl());
+            boolean dadosDePesquisaAlterados = !Objects.equals(
+                    filme.getTitulo(),
+                    filmeExistente.getTitulo())
+                    || !Objects.equals(
+                            filme.getAno(),
+                            filmeExistente.getAno());
+
+            if (dadosDePesquisaAlterados) {
+                /*
+                 * A capa antiga pode pertencer a outro filme.
+                 *
+                 * Sem internet, o registro será salvo sem capa e
+                 * a atualização automática tentará novamente depois.
+                 */
+                filme.setTmdbId(null);
+                filme.setCapaUrl(null);
+
+                capaFilmeService.preencherCapa(filme);
+            } else {
+                /*
+                 * Se título e ano não mudaram, mantém a capa atual.
+                 */
+                filme.setTmdbId(filmeExistente.getTmdbId());
+                filme.setCapaUrl(filmeExistente.getCapaUrl());
+            }
         }
 
         return filmeRepository.save(filme);

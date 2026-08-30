@@ -20,25 +20,39 @@ public class TmdbClient {
 
     private final RestClient restClient;
     private final String imageBaseUrl;
+    private final boolean tokenConfigurado;
 
     /*
      * O Spring fornece as configurações definidas no
      * application.properties e constrói o cliente HTTP.
      */
     public TmdbClient(
-        RestClient.Builder builder,
-        @Value("${tmdb.api.base-url}") String apiBaseUrl,
-        @Value("${tmdb.api.token}") String apiToken,
-        @Value("${tmdb.image.base-url}") String imageBaseUrl
-    ) {
-        this.restClient = builder
-            .baseUrl(apiBaseUrl)
-            .defaultHeader(
-                HttpHeaders.AUTHORIZATION,
-                "Bearer " + apiToken
-            )
-            .build();
+            RestClient.Builder builder,
+            @Value("${tmdb.api.base-url}") String apiBaseUrl,
+            @Value("${tmdb.api.token}") String apiToken,
+            @Value("${tmdb.image.base-url}") String imageBaseUrl) {
+        /*
+         * Verifica somente se o token possui algum conteúdo.
+         * A credencial nunca é registrada no terminal.
+         */
+        this.tokenConfigurado = apiToken != null && !apiToken.isBlank();
 
+        /*
+         * Configura o endereço principal do TMDB.
+         */
+        RestClient.Builder clienteBuilder = builder.baseUrl(apiBaseUrl);
+
+        /*
+         * O cabeçalho de autenticação só é adicionado
+         * quando o token estiver configurado.
+         */
+        if (tokenConfigurado) {
+            clienteBuilder.defaultHeader(
+                    HttpHeaders.AUTHORIZATION,
+                    "Bearer " + apiToken);
+        }
+
+        this.restClient = clienteBuilder.build();
         this.imageBaseUrl = imageBaseUrl;
     }
 
@@ -49,21 +63,28 @@ public class TmdbClient {
      * com capa ser encontrado.
      */
     public Optional<TmdbFilmeResponse> buscarFilme(
-        String titulo,
-        Integer ano
-    ) {
+            String titulo,
+            Integer ano) {
+        /*
+         * Sem token, a pesquisa é ignorada.
+         *
+         * Isso permite cadastrar e usar o CineTrack normalmente
+         * mesmo quando a integração não estiver configurada.
+         */
+        if (!tokenConfigurado) {
+            return Optional.empty();
+        }
         TmdbPesquisaResponse resposta = restClient
-            .get()
-            .uri(uriBuilder -> uriBuilder
-                .path("/search/movie")
-                .queryParam("query", titulo)
-                .queryParam("year", ano)
-                .queryParam("language", "pt-BR")
-                .queryParam("include_adult", false)
-                .build()
-            )
-            .retrieve()
-            .body(TmdbPesquisaResponse.class);
+                .get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/search/movie")
+                        .queryParam("query", titulo)
+                        .queryParam("year", ano)
+                        .queryParam("language", "pt-BR")
+                        .queryParam("include_adult", false)
+                        .build())
+                .retrieve()
+                .body(TmdbPesquisaResponse.class);
 
         /*
          * Protege a aplicação contra uma resposta vazia.
@@ -76,10 +97,10 @@ public class TmdbClient {
          * Seleciona o primeiro resultado que realmente possui capa.
          */
         return resposta.results()
-            .stream()
-            .filter(filme -> filme.posterPath() != null)
-            .filter(filme -> !filme.posterPath().isBlank())
-            .findFirst();
+                .stream()
+                .filter(filme -> filme.posterPath() != null)
+                .filter(filme -> !filme.posterPath().isBlank())
+                .findFirst();
     }
 
     /*
