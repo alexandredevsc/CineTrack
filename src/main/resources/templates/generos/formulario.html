@@ -1,0 +1,155 @@
+<!doctype html>
+
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!--
+        O título muda entre cadastro e edição.
+    -->
+    <title th:text="${tituloPagina + ' | CineTrack'}">Gênero | CineTrack</title>
+
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+  </head>
+
+  <body>
+    <!-- Cabeçalho da aplicação. -->
+    <header class="app-header">
+      <div class="container header-content">
+        <a
+          class="brand"
+          th:href="@{/filmes}"
+          aria-label="Ir para a página de filmes"
+        >
+          CineTrack
+        </a>
+
+        <nav class="main-navigation" aria-label="Navegação principal">
+          <a th:href="@{/filmes}"> Filmes </a>
+
+          <a class="active" th:href="@{/generos}" aria-current="page">
+            Gêneros
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container page-content">
+      <!-- Cabeçalho da página. -->
+      <section class="page-heading">
+        <div>
+          <p class="eyebrow">Organização</p>
+
+          <h1 th:text="${tituloPagina}">Novo gênero</h1>
+
+          <p class="page-description">
+            Use um nome simples, como Ação, Drama ou Ficção científica.
+          </p>
+        </div>
+      </section>
+
+      <section class="form-card">
+        <!--
+                O mesmo formulário atende cadastro e edição.
+
+                Novo registro:
+                POST /generos
+
+                Registro existente:
+                POST /generos/{id}
+            -->
+        <form
+          method="post"
+          th:object="${genero}"
+          th:action="${genero.id == null}
+                    ? @{/generos}
+                    : @{/generos/{id}(id=${genero.id})}"
+        >
+          <!--
+                    Exibe erros gerais, como nome duplicado.
+                -->
+          <div
+            class="alert alert-error"
+            role="alert"
+            th:if="${#fields.hasGlobalErrors()}"
+          >
+            <p th:each="erro : ${#fields.globalErrors()}" th:text="${erro}">
+              Não foi possível salvar o gênero.
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label for="nome"> Nome do gênero </label>
+
+            <!--
+                        th:field liga o input à propriedade nome
+                        do objeto Genero.
+                    -->
+            <input
+              id="nome"
+              type="text"
+              th:field="*{nome}"
+              th:classappend="${#fields.hasErrors('nome')}
+                            ? 'input-error'
+                            : ''"
+              maxlength="50"
+              placeholder="Ex.: Ficção científica"
+              autocomplete="off"
+              required
+              autofocus
+              aria-describedby="nome-ajuda nome-erro"
+            />
+
+            <small id="nome-ajuda" class="field-help">
+              O nome deve ter no máximo 50 caracteres.
+            </small>
+
+            <!--
+                        Exibe a mensagem das anotações
+                        @NotBlank ou @Size.
+                    -->
+            <span
+              id="nome-erro"
+              class="field-error"
+              th:if="${#fields.hasErrors('nome')}"
+              th:errors="*{nome}"
+            >
+              Informe o nome do gênero.
+            </span>
+          </div>
+
+          <!-- Ações do formulário. -->
+          <div class="form-actions">
+            <a class="button button-secondary" th:href="@{/generos}">
+              Cancelar
+            </a>
+
+            <button class="button button-primary" type="submit">
+              Salvar gênero
+            </button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <!--
+  Rodapé institucional compartilhado pelas páginas.
+  O texto permanece em uma linha quando existe espaço
+  e quebra naturalmente em telas menores.
+-->
+    <footer class="app-footer">
+      <div class="container">
+        <p>
+          CineTrack — sua coleção de filmes organizada.
+          <span aria-hidden="true">|</span>
+          Este produto usa a API do TMDB, mas não é endossado nem certificado
+          pelo TMDB.
+          <span aria-hidden="true">|</span>
+          Desenvolvido por <strong>Alexandre Milton Alves</strong>.
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

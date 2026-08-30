@@ -1,0 +1,354 @@
+<!doctype html>
+
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Filmes | CineTrack</title>
+
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+
+    <script th:src="@{/js/script.js}" defer></script>
+  </head>
+
+  <body>
+    <!-- Cabeçalho principal. -->
+    <header class="app-header">
+      <div class="container header-content">
+        <a
+          class="brand"
+          th:href="@{/filmes}"
+          aria-label="Ir para a página de filmes"
+        >
+          CineTrack
+        </a>
+
+        <nav class="main-navigation" aria-label="Navegação principal">
+          <a class="active" th:href="@{/filmes}" aria-current="page">
+            Filmes
+          </a>
+
+          <a th:href="@{/generos}"> Gêneros </a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container page-content">
+      <!-- Título e botão de cadastro. -->
+      <section class="page-heading">
+        <div>
+          <p class="eyebrow">Minha coleção</p>
+
+          <h1>Filmes</h1>
+
+          <p class="page-description">
+            Acompanhe o que você assistiu e o que ainda está na sua lista.
+          </p>
+        </div>
+
+        <a class="button button-primary" th:href="@{/filmes/novo}">
+          Novo filme
+        </a>
+      </section>
+
+      <!-- Mensagens vindas dos Controllers. -->
+      <div
+        class="alert alert-success"
+        role="status"
+        th:if="${mensagemSucesso}"
+        th:text="${mensagemSucesso}"
+      >
+        Operação realizada com sucesso.
+      </div>
+
+      <div
+        class="alert alert-error"
+        role="alert"
+        th:if="${mensagemErro}"
+        th:text="${mensagemErro}"
+      >
+        Não foi possível realizar a operação.
+      </div>
+
+      <!-- Área de filtros. -->
+      <section class="filter-panel" aria-labelledby="titulo-filtros">
+        <div class="filter-heading">
+          <div>
+            <h2 id="titulo-filtros">Filtrar coleção</h2>
+
+            <p>Encontre rapidamente os filmes desejados.</p>
+          </div>
+
+          <a class="button button-text" th:href="@{/filmes}">
+            Limpar filtros
+          </a>
+        </div>
+
+        <div class="filter-grid">
+          <!-- Filtro por gênero. -->
+          <form
+            class="filter-form"
+            method="get"
+            th:action="@{/filmes/filtrar/genero}"
+          >
+            <label for="filtro-genero"> Gênero </label>
+
+            <div class="filter-control">
+              <select id="filtro-genero" name="generoId" required>
+                <option value="">Selecione</option>
+
+                <option
+                  th:each="genero : ${generos}"
+                  th:value="${genero.id}"
+                  th:text="${genero.nome}"
+                  th:selected="${genero.id
+                                    == generoSelecionado}"
+                >
+                  Ação
+                </option>
+              </select>
+
+              <button class="button button-secondary" type="submit">
+                Aplicar
+              </button>
+            </div>
+          </form>
+
+          <!-- Filtro por status. -->
+          <form
+            class="filter-form"
+            method="get"
+            th:action="@{/filmes/filtrar/status}"
+          >
+            <label for="filtro-status"> Status </label>
+
+            <div class="filter-control">
+              <select id="filtro-status" name="status" required>
+                <option value="">Selecione</option>
+
+                <option
+                  th:each="status : ${statusDisponiveis}"
+                  th:value="${status}"
+                  th:text="${status.descricao}"
+                  th:selected="${status
+                                    == statusSelecionado}"
+                >
+                  Assistido
+                </option>
+              </select>
+
+              <button class="button button-secondary" type="submit">
+                Aplicar
+              </button>
+            </div>
+          </form>
+
+          <!-- Filtro por nota mínima. -->
+          <form
+            class="filter-form"
+            method="get"
+            th:action="@{/filmes/filtrar/nota}"
+          >
+            <label for="filtro-nota"> Nota mínima </label>
+
+            <div class="filter-control">
+              <input
+                id="filtro-nota"
+                name="notaMinima"
+                type="number"
+                min="0"
+                max="10"
+                step="0.5"
+                placeholder="Ex.: 8"
+                th:value="${notaMinimaSelecionada}"
+                required
+              />
+
+              <button class="button button-secondary" type="submit">
+                Aplicar
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- Resumo da quantidade encontrada. -->
+      <section class="collection-summary">
+        <p>
+          <strong th:text="${#lists.size(filmes)}"> 0 </strong>
+
+          <span
+            th:text="${#lists.size(filmes) == 1
+                    ? 'filme encontrado'
+                    : 'filmes encontrados'}"
+          >
+            filmes encontrados
+          </span>
+        </p>
+      </section>
+
+      <!-- Estado vazio. -->
+      <section class="empty-state" th:if="${#lists.isEmpty(filmes)}">
+        <h2>Nenhum filme encontrado</h2>
+
+        <p>
+          Cadastre um filme ou altere os filtros para visualizar outros
+          resultados.
+        </p>
+
+        <a class="button button-primary" th:href="@{/filmes/novo}">
+          Cadastrar filme
+        </a>
+      </section>
+
+      <!--
+            Cada filme será mostrado em um card.
+            O CSS transformará esta seção em um grid responsivo.
+        -->
+      <section
+        class="movie-grid"
+        aria-label="Lista de filmes"
+        th:unless="${#lists.isEmpty(filmes)}"
+      >
+        <article class="movie-card" th:each="filme : ${filmes}">
+          <!-- Capa encontrada automaticamente no TMDB. -->
+          <div
+            class="movie-poster"
+            th:if="${filme.capaUrl != null
+          and !#strings.isEmpty(filme.capaUrl)}"
+          >
+            <img
+              src=""
+              th:src="${filme.capaUrl}"
+              alt="Capa do filme"
+              th:alt="${'Capa do filme ' + filme.titulo}"
+              width="342"
+              height="513"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+
+          <!--
+  Fallback exibido quando o TMDB não encontra uma capa
+  ou para filmes cadastrados antes da integração.
+-->
+          <div
+            class="movie-poster movie-poster-placeholder"
+            aria-hidden="true"
+            th:unless="${filme.capaUrl != null
+              and !#strings.isEmpty(filme.capaUrl)}"
+          >
+            <span
+              th:text="${#strings.substring(
+                  filme.titulo,
+                  0,
+                  1
+              )}"
+            >
+              F
+            </span>
+          </div>
+          <div class="movie-card-content">
+            <!-- Status destacado no início do card. -->
+            <span
+              class="status-badge"
+              th:classappend="${filme.status.name()
+                            == 'ASSISTIDO'}
+                            ? ' status-watched'
+                            : ' status-watchlist'"
+              th:text="${filme.status.descricao}"
+            >
+              Quero assistir
+            </span>
+
+            <div class="movie-heading">
+              <h2 th:text="${filme.titulo}">Interestelar</h2>
+
+              <p class="movie-metadata">
+                <span th:text="${filme.genero.nome}"> Ficção científica </span>
+
+                <span aria-hidden="true"> • </span>
+
+                <span th:text="${filme.ano}"> 2014 </span>
+              </p>
+            </div>
+
+            <!--
+                        A nota aparece somente quando existe.
+                    -->
+            <div
+              class="movie-rating"
+              th:if="${filme.nota != null}"
+              th:attr="aria-label=${
+                            'Nota ' + filme.nota + ' de 10'
+                        }"
+            >
+              <span aria-hidden="true"> ★ </span>
+
+              <strong th:text="${filme.nota}"> 9.5 </strong>
+
+              <span class="rating-total"> / 10 </span>
+            </div>
+
+            <!-- Comentário opcional. -->
+            <p
+              class="movie-comment"
+              th:if="${filme.comentario != null
+                            and !#strings.isEmpty(
+                                filme.comentario
+                            )}"
+              th:text="${filme.comentario}"
+            >
+              Um ótimo filme.
+            </p>
+
+            <!-- Ações do card. -->
+            <div class="movie-card-actions">
+              <a
+                class="button button-secondary button-small"
+                th:href="@{/filmes/{id}/editar(
+                                id=${filme.id}
+                            )}"
+              >
+                Editar
+              </a>
+
+              <form
+                class="inline-form"
+                method="post"
+                th:action="@{/filmes/{id}/excluir(
+                                id=${filme.id}
+                            )}"
+              >
+                <button class="button button-danger button-small" type="submit">
+                  Excluir
+                </button>
+              </form>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <!--
+  Rodapé institucional compartilhado pelas páginas.
+  O texto permanece em uma linha quando existe espaço
+  e quebra naturalmente em telas menores.
+-->
+    <footer class="app-footer">
+      <div class="container">
+        <p>
+          CineTrack — sua coleção de filmes organizada.
+          <span aria-hidden="true">|</span>
+          Este produto usa a API do TMDB, mas não é endossado nem certificado
+          pelo TMDB.
+          <span aria-hidden="true">|</span>
+          Desenvolvido por <strong>Alexandre Milton Alves</strong>.
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>
