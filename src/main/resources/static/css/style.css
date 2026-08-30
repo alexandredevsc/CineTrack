@@ -351,11 +351,11 @@ h1, h2, p { margin-top: 0; }
 .movie-comment { color: var(--muted); font-size: 0.86rem; }
 
 .movie-comment {
-    margin-bottom: 16px;
     display: -webkit-box;
     overflow: hidden;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
 }
 
 .movie-card-actions {
@@ -448,21 +448,46 @@ textarea:focus {
 
 /* ==================== RODAPÉ ==================== */
 
+/* Rodapé institucional da aplicação. */
 .app-footer {
     border-top: 1px solid var(--border);
     background: var(--surface);
 }
 
+/*
+ * Centraliza o conteúdo e cria espaço vertical suficiente.
+ * O padding permite que o rodapé cresça quando o texto quebrar.
+ */
 .app-footer .container {
     min-height: 68px;
+    padding-block: 14px;
     display: flex;
     align-items: center;
+    justify-content: center;
 }
 
+/*
+ * Em telas largas, o texto cabe em uma linha.
+ * Em telas menores, a quebra ocorre naturalmente.
+ */
 .app-footer p {
+    width: 100%;
     margin: 0;
     color: var(--muted);
     font-size: 0.85rem;
+    line-height: 1.6;
+    text-align: center;
+}
+
+/* Cria um pequeno espaço ao redor dos separadores. */
+.app-footer p span {
+    margin-inline: 0.4rem;
+    color: var(--border);
+}
+
+/* Destaca discretamente o nome do desenvolvedor. */
+.app-footer strong {
+    color: var(--text);
 }
 
 
